@@ -1,6 +1,8 @@
 #ifndef AUTOLIGHT_INCLUDED
 #define AUTOLIGHT_INCLUDED
 
+#define SHADOWS_SCREEN // main light shadow
+
 #include "HLSLSupport.cginc"
 #include "UnityShadowLibrary.cginc"
 
@@ -17,16 +19,16 @@
 #if defined (SHADOWS_SCREEN)
 
     #if defined(UNITY_NO_SCREENSPACE_SHADOWS)
-        UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
-        #define TRANSFER_SHADOW(a) a._ShadowCoord = mul( unity_WorldToShadow[0], mul( unity_ObjectToWorld, v.vertex ) );
+        UNITY_DECLARE_SHADOWMAP(_MainLightShadowmapTexture);
+        #define TRANSFER_SHADOW(a) a._ShadowCoord = mul( _MainLightWorldToShadow[0], mul( unity_ObjectToWorld, v.vertex ) );
         inline fixed unitySampleShadow (unityShadowCoord4 shadowCoord)
         {
             #if defined(SHADOWS_NATIVE)
-                fixed shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
+                fixed shadow = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, shadowCoord.xyz);
                 shadow = _LightShadowData.r + shadow * (1-_LightShadowData.r);
                 return shadow;
             #else
-                unityShadowCoord dist = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, shadowCoord.xy);
+                unityShadowCoord dist = SAMPLE_DEPTH_TEXTURE(_MainLightShadowmapTexture, shadowCoord.xy);
                 // tegra is confused if we use _LightShadowData.x directly
                 // with "ambiguous overloaded function reference max(mediump float, float)"
                 unityShadowCoord lightShadowDataX = _LightShadowData.x;
@@ -36,11 +38,11 @@
         }
 
     #else // UNITY_NO_SCREENSPACE_SHADOWS
-        UNITY_DECLARE_SCREENSPACE_SHADOWMAP(_ShadowMapTexture);
+        UNITY_DECLARE_SCREENSPACE_SHADOWMAP(_MainLightShadowmapTexture);
         #define TRANSFER_SHADOW(a) a._ShadowCoord = ComputeScreenPos(a.pos);
         inline fixed unitySampleShadow (unityShadowCoord4 shadowCoord)
         {
-            fixed shadow = UNITY_SAMPLE_SCREEN_SHADOW(_ShadowMapTexture, shadowCoord);
+            fixed shadow = UNITY_SAMPLE_SCREEN_SHADOW(_MainLightShadowmapTexture, shadowCoord);
             return shadow;
         }
 
@@ -70,7 +72,7 @@ half UnityComputeForwardShadows(float2 lightmapUV, float3 worldPos, float4 scree
     //directional realtime shadow
     #if defined (SHADOWS_SCREEN)
         #if defined(UNITY_NO_SCREENSPACE_SHADOWS) && !defined(UNITY_HALF_PRECISION_FRAGMENT_SHADER_REGISTERS)
-            realtimeShadowAttenuation = unitySampleShadow(mul(unity_WorldToShadow[0], unityShadowCoord4(worldPos, 1)));
+            realtimeShadowAttenuation = unitySampleShadow(mul(_MainLightWorldToShadow[0], unityShadowCoord4(worldPos, 1)));
         #else
             //Only reached when LIGHTMAP_ON is NOT defined (and thus we use interpolator for screenPos rather than lightmap UVs). See HANDLE_SHADOWS_BLENDING_IN_GI below.
             realtimeShadowAttenuation = unitySampleShadow(screenPos);
@@ -87,7 +89,7 @@ half UnityComputeForwardShadows(float2 lightmapUV, float3 worldPos, float4 scree
         //spot realtime shadow
         #if (defined (SHADOWS_DEPTH) && defined (SPOT))
             #if !defined(UNITY_HALF_PRECISION_FRAGMENT_SHADER_REGISTERS)
-                unityShadowCoord4 spotShadowCoord = mul(unity_WorldToShadow[0], unityShadowCoord4(worldPos, 1));
+                unityShadowCoord4 spotShadowCoord = mul(_MainLightWorldToShadow[0], unityShadowCoord4(worldPos, 1));
             #else
                 unityShadowCoord4 spotShadowCoord = screenPos;
             #endif
@@ -235,7 +237,7 @@ unityShadowCoord4x4 unity_WorldToLight;
 // ---- Spot light shadows
 #if defined (SHADOWS_DEPTH) && defined (SPOT)
 #define SHADOW_COORDS(idx1) unityShadowCoord4 _ShadowCoord : TEXCOORD##idx1;
-#define TRANSFER_SHADOW(a) a._ShadowCoord = mul (unity_WorldToShadow[0], mul(unity_ObjectToWorld,v.vertex));
+#define TRANSFER_SHADOW(a) a._ShadowCoord = mul (_MainLightWorldToShadow[0], mul(unity_ObjectToWorld,v.vertex));
 #define SHADOW_ATTENUATION(a) UnitySampleShadowmap(a._ShadowCoord)
 #endif
 

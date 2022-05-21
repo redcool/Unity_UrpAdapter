@@ -154,11 +154,12 @@ CBUFFER_START(UnityShadows)
     float4 unity_LightShadowBias;
     float4 _LightSplitsNear;
     float4 _LightSplitsFar;
-    float4x4 unity_WorldToShadow[4];
-    half4 _LightShadowData;
+    float4x4 _MainLightWorldToShadow[4];
+    half4 _MainLightShadowParams;
     float4 unity_ShadowFadeCenterAndType;
 CBUFFER_END
 
+    #define _LightShadowData _MainLightShadowParams
 // ----------------------------------------------------------------------------
 
 CBUFFER_START(UnityPerDraw)
@@ -333,7 +334,5 @@ static float4x4 unity_MatrixITMV = transpose(mul(unity_WorldToObject, unity_Matr
 #define UNITY_MATRIX_TEXTURE1 float4x4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)
 #define UNITY_MATRIX_TEXTURE2 float4x4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)
 #define UNITY_MATRIX_TEXTURE3 float4x4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)
-
-#include "DrpVariables.hlsl"
 
 #endif
