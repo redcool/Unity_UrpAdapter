@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 // UI Editable properties
 uniform fixed4      _FaceColor;                 // RGBA : Color + Opacity
 uniform float       _FaceDilate;                // v[ 0, 1]

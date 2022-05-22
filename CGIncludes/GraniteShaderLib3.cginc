@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 //@IGNORE_BEGIN
 /**
 *   Graphine Granite Runtime Shader 3.0

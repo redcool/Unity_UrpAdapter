@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 #ifndef HLSL_SUPPORT_INCLUDED
 #define HLSL_SUPPORT_INCLUDED
 

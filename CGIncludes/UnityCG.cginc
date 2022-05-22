@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 #ifndef UNITY_CG_INCLUDED
 #define UNITY_CG_INCLUDED
 
@@ -1148,7 +1150,7 @@ float4 UnityApplyLinearShadowBias(float4 clipPos)
 #ifdef SHADOW_COLLECTOR_PASS
 
 #if !defined(SHADOWMAPSAMPLER_DEFINED)
-UNITY_DECLARE_SHADOWMAP(_MainLightShadowmapTexture);
+UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
 #endif
 
 // Note: V2F_SHADOW_COLLECTOR and TRANSFER_SHADOW_COLLECTOR are deprecated
@@ -1158,14 +1160,14 @@ UNITY_DECLARE_SHADOWMAP(_MainLightShadowmapTexture);
     float4 wpos = mul(unity_ObjectToWorld, v.vertex); \
     o._WorldPosViewZ.xyz = wpos; \
     o._WorldPosViewZ.w = -UnityObjectToViewPos(v.vertex).z; \
-    o._ShadowCoord0 = mul(_MainLightWorldToShadow[0], wpos).xyz; \
-    o._ShadowCoord1 = mul(_MainLightWorldToShadow[1], wpos).xyz; \
-    o._ShadowCoord2 = mul(_MainLightWorldToShadow[2], wpos).xyz; \
-    o._ShadowCoord3 = mul(_MainLightWorldToShadow[3], wpos).xyz;
+    o._ShadowCoord0 = mul(unity_WorldToShadow[0], wpos).xyz; \
+    o._ShadowCoord1 = mul(unity_WorldToShadow[1], wpos).xyz; \
+    o._ShadowCoord2 = mul(unity_WorldToShadow[2], wpos).xyz; \
+    o._ShadowCoord3 = mul(unity_WorldToShadow[3], wpos).xyz;
 
 // Note: SAMPLE_SHADOW_COLLECTOR_SHADOW is deprecated
 #define SAMPLE_SHADOW_COLLECTOR_SHADOW(coord) \
-    half shadow = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture,coord); \
+    half shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture,coord); \
     shadow = _LightShadowData.r + shadow * (1-_LightShadowData.r);
 
 // Note: COMPUTE_SHADOW_COLLECTOR_SHADOW is deprecated

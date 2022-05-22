@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 #ifndef UNITY_RAY_TRACING_MESH_UTILS_INCLUDED
 #define UNITY_RAY_TRACING_MESH_UTILS_INCLUDED
 

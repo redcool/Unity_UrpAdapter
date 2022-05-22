@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 #ifndef UNITY_SHADER_VARIABLES_INCLUDED
 #define UNITY_SHADER_VARIABLES_INCLUDED
 
@@ -127,14 +129,7 @@ CBUFFER_START(UnityLighting)
     half4 unity_LightAtten[8];
     float4 unity_SpotDirection[8]; // view-space spot light directions, or (0,0,1,0) for non-spot
 
-    // SH lighting environment
-    half4 unity_SHAr;
-    half4 unity_SHAg;
-    half4 unity_SHAb;
-    half4 unity_SHBr;
-    half4 unity_SHBg;
-    half4 unity_SHBb;
-    half4 unity_SHC;
+
 
     // part of Light because it can be used outside of shadow distance
     fixed4 unity_OcclusionMaskSelector;
@@ -154,12 +149,11 @@ CBUFFER_START(UnityShadows)
     float4 unity_LightShadowBias;
     float4 _LightSplitsNear;
     float4 _LightSplitsFar;
-    float4x4 _MainLightWorldToShadow[4];
-    half4 _MainLightShadowParams;
+    float4x4 unity_WorldToShadow[4];
+    half4 _LightShadowData;
     float4 unity_ShadowFadeCenterAndType;
 CBUFFER_END
 
-    #define _LightShadowData _MainLightShadowParams
 // ----------------------------------------------------------------------------
 
 CBUFFER_START(UnityPerDraw)
@@ -168,6 +162,25 @@ CBUFFER_START(UnityPerDraw)
     float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
     float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
     float4 unity_RenderingLayer;
+
+    // SH lighting environment
+    half4 unity_SHAr;
+    half4 unity_SHAg;
+    half4 unity_SHAb;
+    half4 unity_SHBr;
+    half4 unity_SHBg;
+    half4 unity_SHBb;
+    half4 unity_SHC;
+
+    float4 unity_SpecCube0_BoxMax;
+    float4 unity_SpecCube0_BoxMin;
+    float4 unity_SpecCube0_ProbePosition;
+    half4  unity_SpecCube0_HDR;
+
+    float4 unity_SpecCube1_BoxMax;
+    float4 unity_SpecCube1_BoxMin;
+    float4 unity_SpecCube1_ProbePosition;
+    half4  unity_SpecCube1_HDR;
 CBUFFER_END
 
 #if defined(USING_STEREO_MATRICES)
@@ -269,7 +282,7 @@ CBUFFER_END
 
 UNITY_DECLARE_TEXCUBE(unity_SpecCube0);
 UNITY_DECLARE_TEXCUBE_NOSAMPLER(unity_SpecCube1);
-
+/*
 CBUFFER_START(UnityReflectionProbes)
     float4 unity_SpecCube0_BoxMax;
     float4 unity_SpecCube0_BoxMin;
@@ -281,7 +294,7 @@ CBUFFER_START(UnityReflectionProbes)
     float4 unity_SpecCube1_ProbePosition;
     half4  unity_SpecCube1_HDR;
 CBUFFER_END
-
+*/
 
 // ----------------------------------------------------------------------------
 // Light Probe Proxy Volume

@@ -1,3 +1,5 @@
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
 #ifndef UNITY_BUILTIN_SHADOW_LIBRARY_INCLUDED
 #define UNITY_BUILTIN_SHADOW_LIBRARY_INCLUDED
 
@@ -25,14 +27,14 @@ float3  UnityGetReceiverPlaneDepthBias(float3 shadowCoord, float biasbiasMultipl
 
     // declare shadowmap
     #if !defined(SHADOWMAPSAMPLER_DEFINED)
-        UNITY_DECLARE_SHADOWMAP(_MainLightShadowmapTexture);
+        UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
         #define SHADOWMAPSAMPLER_DEFINED
     #endif
 
     // shadow sampling offsets and texel size
     #if defined (SHADOWS_SOFT)
         float4 _ShadowOffsets[4];
-        float4 _MainLightShadowmapTexture_TexelSize;
+        float4 _ShadowMapTexture_TexelSize;
         #define SHADOWMAPSAMPLER_AND_TEXELSIZE_DEFINED
     #endif
 
@@ -46,10 +48,10 @@ inline fixed UnitySampleShadowmap (float4 shadowCoord)
         #if !defined (SHADOWS_NATIVE)
             float3 coord = shadowCoord.xyz / shadowCoord.w;
             float4 shadowVals;
-            shadowVals.x = SAMPLE_DEPTH_TEXTURE(_MainLightShadowmapTexture, coord + _ShadowOffsets[0].xy);
-            shadowVals.y = SAMPLE_DEPTH_TEXTURE(_MainLightShadowmapTexture, coord + _ShadowOffsets[1].xy);
-            shadowVals.z = SAMPLE_DEPTH_TEXTURE(_MainLightShadowmapTexture, coord + _ShadowOffsets[2].xy);
-            shadowVals.w = SAMPLE_DEPTH_TEXTURE(_MainLightShadowmapTexture, coord + _ShadowOffsets[3].xy);
+            shadowVals.x = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, coord + _ShadowOffsets[0].xy);
+            shadowVals.y = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, coord + _ShadowOffsets[1].xy);
+            shadowVals.z = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, coord + _ShadowOffsets[2].xy);
+            shadowVals.w = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, coord + _ShadowOffsets[3].xy);
             half4 shadows = (shadowVals < coord.zzzz) ? _LightShadowData.rrrr : 1.0f;
             shadow = dot(shadows, 0.25f);
         #else
@@ -57,10 +59,10 @@ inline fixed UnitySampleShadowmap (float4 shadowCoord)
             #if defined(SHADER_API_MOBILE)
                 float3 coord = shadowCoord.xyz / shadowCoord.w;
                 half4 shadows;
-                shadows.x = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, coord + _ShadowOffsets[0]);
-                shadows.y = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, coord + _ShadowOffsets[1]);
-                shadows.z = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, coord + _ShadowOffsets[2]);
-                shadows.w = UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, coord + _ShadowOffsets[3]);
+                shadows.x = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, coord + _ShadowOffsets[0]);
+                shadows.y = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, coord + _ShadowOffsets[1]);
+                shadows.z = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, coord + _ShadowOffsets[2]);
+                shadows.w = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, coord + _ShadowOffsets[3]);
                 shadow = dot(shadows, 0.25f);
             // Everything else
             #else
@@ -73,10 +75,10 @@ inline fixed UnitySampleShadowmap (float4 shadowCoord)
     #else
         // 1-tap shadows
         #if defined (SHADOWS_NATIVE)
-            half shadow = UNITY_SAMPLE_SHADOW_PROJ(_MainLightShadowmapTexture, shadowCoord);
+            half shadow = UNITY_SAMPLE_SHADOW_PROJ(_ShadowMapTexture, shadowCoord);
             shadow = lerp(_LightShadowData.r, 1.0f, shadow);
         #else
-            half shadow = SAMPLE_DEPTH_TEXTURE_PROJ(_MainLightShadowmapTexture, UNITY_PROJ_COORD(shadowCoord)) < (shadowCoord.z / shadowCoord.w) ? _LightShadowData.r : 1.0;
+            half shadow = SAMPLE_DEPTH_TEXTURE_PROJ(_ShadowMapTexture, UNITY_PROJ_COORD(shadowCoord)) < (shadowCoord.z / shadowCoord.w) ? _LightShadowData.r : 1.0;
         #endif
 
     #endif
@@ -93,12 +95,12 @@ inline fixed UnitySampleShadowmap (float4 shadowCoord)
 #if defined (SHADOWS_CUBE)
 
 #if defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-    UNITY_DECLARE_TEXCUBE_SHADOWMAP(_MainLightShadowmapTexture);
+    UNITY_DECLARE_TEXCUBE_SHADOWMAP(_ShadowMapTexture);
 #else
-    UNITY_DECLARE_TEXCUBE(_MainLightShadowmapTexture);
+    UNITY_DECLARE_TEXCUBE(_ShadowMapTexture);
     inline float SampleCubeDistance (float3 vec)
     {
-        return UnityDecodeCubeShadowDepth(UNITY_SAMPLE_TEXCUBE_LOD(_MainLightShadowmapTexture, vec, 0));
+        return UnityDecodeCubeShadowDepth(UNITY_SAMPLE_TEXCUBE_LOD(_ShadowMapTexture, vec, 0));
     }
 
 #endif
@@ -125,10 +127,10 @@ inline half UnitySampleShadowmap (float3 vec)
         float4 shadowVals;
         // No hardware comparison sampler (ie some mobile + xbox360) : simple 4 tap PCF
         #if defined (SHADOWS_CUBE_IN_DEPTH_TEX)
-            shadowVals.x = UNITY_SAMPLE_TEXCUBE_SHADOW(_MainLightShadowmapTexture, float4(vec+float3( z, z, z), mydist));
-            shadowVals.y = UNITY_SAMPLE_TEXCUBE_SHADOW(_MainLightShadowmapTexture, float4(vec+float3(-z,-z, z), mydist));
-            shadowVals.z = UNITY_SAMPLE_TEXCUBE_SHADOW(_MainLightShadowmapTexture, float4(vec+float3(-z, z,-z), mydist));
-            shadowVals.w = UNITY_SAMPLE_TEXCUBE_SHADOW(_MainLightShadowmapTexture, float4(vec+float3( z,-z,-z), mydist));
+            shadowVals.x = UNITY_SAMPLE_TEXCUBE_SHADOW(_ShadowMapTexture, float4(vec+float3( z, z, z), mydist));
+            shadowVals.y = UNITY_SAMPLE_TEXCUBE_SHADOW(_ShadowMapTexture, float4(vec+float3(-z,-z, z), mydist));
+            shadowVals.z = UNITY_SAMPLE_TEXCUBE_SHADOW(_ShadowMapTexture, float4(vec+float3(-z, z,-z), mydist));
+            shadowVals.w = UNITY_SAMPLE_TEXCUBE_SHADOW(_ShadowMapTexture, float4(vec+float3( z,-z,-z), mydist));
             half shadow = dot(shadowVals, 0.25);
             return lerp(_LightShadowData.r, 1.0, shadow);
         #else
@@ -141,10 +143,10 @@ inline half UnitySampleShadowmap (float3 vec)
         #endif
     #else
         #if defined (SHADOWS_CUBE_IN_DEPTH_TEX)
-            half shadow = UNITY_SAMPLE_TEXCUBE_SHADOW(_MainLightShadowmapTexture, float4(vec, mydist));
+            half shadow = UNITY_SAMPLE_TEXCUBE_SHADOW(_ShadowMapTexture, float4(vec, mydist));
             return lerp(_LightShadowData.r, 1.0, shadow);
         #else
-            half shadowVal = UnityDecodeCubeShadowDepth(UNITY_SAMPLE_TEXCUBE(_MainLightShadowmapTexture, vec));
+            half shadowVal = UnityDecodeCubeShadowDepth(UNITY_SAMPLE_TEXCUBE(_ShadowMapTexture, vec));
             half shadow = shadowVal < mydist ? _LightShadowData.r : 1.0;
             return shadow;
         #endif
@@ -353,7 +355,7 @@ float3 UnityGetReceiverPlaneDepthBias(float3 shadowCoord, float biasMultiply)
 
     // Static depth biasing to make up for incorrect fractional sampling on the shadow map grid.
     const float UNITY_RECEIVER_PLANE_MIN_FRACTIONAL_ERROR = 0.01f;
-    float fractionalSamplingError = dot(_MainLightShadowmapTexture_TexelSize.xy, abs(biasUVZ.xy));
+    float fractionalSamplingError = dot(_ShadowMapTexture_TexelSize.xy, abs(biasUVZ.xy));
     biasUVZ.z = -min(fractionalSamplingError, UNITY_RECEIVER_PLANE_MIN_FRACTIONAL_ERROR);
     #if defined(UNITY_REVERSED_Z)
         biasUVZ.z *= -1;
@@ -503,17 +505,17 @@ half UnitySampleShadowmap_PCF3x3NoHardwareSupport(float4 coord, float3 receiverP
     // when we don't have hardware PCF sampling, then the above 5x5 optimized PCF really does not work.
     // Fallback to a simple 3x3 sampling with averaged results.
     float2 base_uv = coord.xy;
-    float2 ts = _MainLightShadowmapTexture_TexelSize.xy;
+    float2 ts = _ShadowMapTexture_TexelSize.xy;
     shadow = 0;
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, -ts.y), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, -ts.y), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, -ts.y), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, 0), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, 0), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, 0), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, ts.y), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, ts.y), coord.z, receiverPlaneDepthBias));
-    shadow += UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, -ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, -ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, -ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, 0), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, 0), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, 0), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(-ts.x, ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(0, ts.y), coord.z, receiverPlaneDepthBias));
+    shadow += UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(ts.x, ts.y), coord.z, receiverPlaneDepthBias));
     shadow /= 9.0;
 #endif
 
@@ -535,7 +537,7 @@ half UnitySampleShadowmap_PCF3x3Tent(float4 coord, float3 receiverPlaneDepthBias
     #endif
 
     // tent base is 3x3 base thus covering from 9 to 12 texels, thus we need 4 bilinear PCF fetches
-    float2 tentCenterInTexelSpace = coord.xy * _MainLightShadowmapTexture_TexelSize.zw;
+    float2 tentCenterInTexelSpace = coord.xy * _ShadowMapTexture_TexelSize.zw;
     float2 centerOfFetchesInTexelSpace = floor(tentCenterInTexelSpace + 0.5);
     float2 offsetFromTentCenterToCenterOfFetches = tentCenterInTexelSpace - centerOfFetchesInTexelSpace;
 
@@ -551,15 +553,15 @@ half UnitySampleShadowmap_PCF3x3Tent(float4 coord, float3 receiverPlaneDepthBias
     // move the PCF bilinear fetches to respect texels weights
     float2 fetchesOffsetsU = texelsWeightsU.yw / fetchesWeightsU.xy + float2(-1.5,0.5);
     float2 fetchesOffsetsV = texelsWeightsV.yw / fetchesWeightsV.xy + float2(-1.5,0.5);
-    fetchesOffsetsU *= _MainLightShadowmapTexture_TexelSize.xx;
-    fetchesOffsetsV *= _MainLightShadowmapTexture_TexelSize.yy;
+    fetchesOffsetsU *= _ShadowMapTexture_TexelSize.xx;
+    fetchesOffsetsV *= _ShadowMapTexture_TexelSize.yy;
 
     // fetch !
-    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _MainLightShadowmapTexture_TexelSize.xy;
-    shadow =  fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _ShadowMapTexture_TexelSize.xy;
+    shadow =  fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
 #endif
 
     return shadow;
@@ -580,7 +582,7 @@ half UnitySampleShadowmap_PCF5x5Tent(float4 coord, float3 receiverPlaneDepthBias
     #endif
 
     // tent base is 5x5 base thus covering from 25 to 36 texels, thus we need 9 bilinear PCF fetches
-    float2 tentCenterInTexelSpace = coord.xy * _MainLightShadowmapTexture_TexelSize.zw;
+    float2 tentCenterInTexelSpace = coord.xy * _ShadowMapTexture_TexelSize.zw;
     float2 centerOfFetchesInTexelSpace = floor(tentCenterInTexelSpace + 0.5);
     float2 offsetFromTentCenterToCenterOfFetches = tentCenterInTexelSpace - centerOfFetchesInTexelSpace;
 
@@ -597,20 +599,20 @@ half UnitySampleShadowmap_PCF5x5Tent(float4 coord, float3 receiverPlaneDepthBias
     // move the PCF bilinear fetches to respect texels weights
     float3 fetchesOffsetsU = float3(texelsWeightsU_A.y, texelsWeightsU_B.xz) / fetchesWeightsU.xyz + float3(-2.5,-0.5,1.5);
     float3 fetchesOffsetsV = float3(texelsWeightsV_A.y, texelsWeightsV_B.xz) / fetchesWeightsV.xyz + float3(-2.5,-0.5,1.5);
-    fetchesOffsetsU *= _MainLightShadowmapTexture_TexelSize.xxx;
-    fetchesOffsetsV *= _MainLightShadowmapTexture_TexelSize.yyy;
+    fetchesOffsetsU *= _ShadowMapTexture_TexelSize.xxx;
+    fetchesOffsetsV *= _ShadowMapTexture_TexelSize.yyy;
 
     // fetch !
-    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _MainLightShadowmapTexture_TexelSize.xy;
-    shadow  = fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _ShadowMapTexture_TexelSize.xy;
+    shadow  = fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
 #endif
 
     return shadow;
@@ -631,7 +633,7 @@ half UnitySampleShadowmap_PCF7x7Tent(float4 coord, float3 receiverPlaneDepthBias
     #endif
 
     // tent base is 7x7 base thus covering from 49 to 64 texels, thus we need 16 bilinear PCF fetches
-    float2 tentCenterInTexelSpace = coord.xy * _MainLightShadowmapTexture_TexelSize.zw;
+    float2 tentCenterInTexelSpace = coord.xy * _ShadowMapTexture_TexelSize.zw;
     float2 centerOfFetchesInTexelSpace = floor(tentCenterInTexelSpace + 0.5);
     float2 offsetFromTentCenterToCenterOfFetches = tentCenterInTexelSpace - centerOfFetchesInTexelSpace;
 
@@ -648,27 +650,27 @@ half UnitySampleShadowmap_PCF7x7Tent(float4 coord, float3 receiverPlaneDepthBias
     // move the PCF bilinear fetches to respect texels weights
     float4 fetchesOffsetsU = float4(texelsWeightsU_A.yw, texelsWeightsU_B.yw) / fetchesWeightsU.xyzw + float4(-3.5,-1.5,0.5,2.5);
     float4 fetchesOffsetsV = float4(texelsWeightsV_A.yw, texelsWeightsV_B.yw) / fetchesWeightsV.xyzw + float4(-3.5,-1.5,0.5,2.5);
-    fetchesOffsetsU *= _MainLightShadowmapTexture_TexelSize.xxxx;
-    fetchesOffsetsV *= _MainLightShadowmapTexture_TexelSize.yyyy;
+    fetchesOffsetsU *= _ShadowMapTexture_TexelSize.xxxx;
+    fetchesOffsetsV *= _ShadowMapTexture_TexelSize.yyyy;
 
     // fetch !
-    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _MainLightShadowmapTexture_TexelSize.xy;
-    shadow  = fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.w * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.w * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.w * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.x * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.y * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.z * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
-    shadow += fetchesWeightsU.w * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
+    float2 bilinearFetchOrigin = centerOfFetchesInTexelSpace * _ShadowMapTexture_TexelSize.xy;
+    shadow  = fetchesWeightsU.x * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.w * fetchesWeightsV.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.x), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.w * fetchesWeightsV.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.y), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.w * fetchesWeightsV.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.z), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.x * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.x, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.y * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.y, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.z * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.z, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
+    shadow += fetchesWeightsU.w * fetchesWeightsV.w * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(bilinearFetchOrigin, float2(fetchesOffsetsU.w, fetchesOffsetsV.w), coord.z, receiverPlaneDepthBias));
 #endif
 
     return shadow;
@@ -692,24 +694,24 @@ half UnitySampleShadowmap_PCF3x3Gaussian(float4 coord, float3 receiverPlaneDepth
     #endif
 
     const float2 offset = float2(0.5, 0.5);
-    float2 uv = (coord.xy * _MainLightShadowmapTexture_TexelSize.zw) + offset;
-    float2 base_uv = (floor(uv) - offset) * _MainLightShadowmapTexture_TexelSize.xy;
+    float2 uv = (coord.xy * _ShadowMapTexture_TexelSize.zw) + offset;
+    float2 base_uv = (floor(uv) - offset) * _ShadowMapTexture_TexelSize.xy;
     float2 st = frac(uv);
 
     float2 uw = float2(3 - 2 * st.x, 1 + 2 * st.x);
     float2 u = float2((2 - st.x) / uw.x - 1, (st.x) / uw.y + 1);
-    u *= _MainLightShadowmapTexture_TexelSize.x;
+    u *= _ShadowMapTexture_TexelSize.x;
 
     float2 vw = float2(3 - 2 * st.y, 1 + 2 * st.y);
     float2 v = float2((2 - st.y) / vw.x - 1, (st.y) / vw.y + 1);
-    v *= _MainLightShadowmapTexture_TexelSize.y;
+    v *= _ShadowMapTexture_TexelSize.y;
 
     half sum = 0;
 
-    sum += uw[0] * vw[0] * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[0], v[0]), coord.z, receiverPlaneDepthBias));
-    sum += uw[1] * vw[0] * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[1], v[0]), coord.z, receiverPlaneDepthBias));
-    sum += uw[0] * vw[1] * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[0], v[1]), coord.z, receiverPlaneDepthBias));
-    sum += uw[1] * vw[1] * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[1], v[1]), coord.z, receiverPlaneDepthBias));
+    sum += uw[0] * vw[0] * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[0], v[0]), coord.z, receiverPlaneDepthBias));
+    sum += uw[1] * vw[0] * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[1], v[0]), coord.z, receiverPlaneDepthBias));
+    sum += uw[0] * vw[1] * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[0], v[1]), coord.z, receiverPlaneDepthBias));
+    sum += uw[1] * vw[1] * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u[1], v[1]), coord.z, receiverPlaneDepthBias));
 
     shadow = sum / 16.0f;
 #endif
@@ -735,34 +737,34 @@ half UnitySampleShadowmap_PCF5x5Gaussian(float4 coord, float3 receiverPlaneDepth
     #endif
 
     const float2 offset = float2(0.5, 0.5);
-    float2 uv = (coord.xy * _MainLightShadowmapTexture_TexelSize.zw) + offset;
-    float2 base_uv = (floor(uv) - offset) * _MainLightShadowmapTexture_TexelSize.xy;
+    float2 uv = (coord.xy * _ShadowMapTexture_TexelSize.zw) + offset;
+    float2 base_uv = (floor(uv) - offset) * _ShadowMapTexture_TexelSize.xy;
     float2 st = frac(uv);
 
     float3 uw = float3(4 - 3 * st.x, 7, 1 + 3 * st.x);
     float3 u = float3((3 - 2 * st.x) / uw.x - 2, (3 + st.x) / uw.y, st.x / uw.z + 2);
-    u *= _MainLightShadowmapTexture_TexelSize.x;
+    u *= _ShadowMapTexture_TexelSize.x;
 
     float3 vw = float3(4 - 3 * st.y, 7, 1 + 3 * st.y);
     float3 v = float3((3 - 2 * st.y) / vw.x - 2, (3 + st.y) / vw.y, st.y / vw.z + 2);
-    v *= _MainLightShadowmapTexture_TexelSize.y;
+    v *= _ShadowMapTexture_TexelSize.y;
 
     half sum = 0.0f;
 
     half3 accum = uw * vw.x;
-    sum += accum.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.x), coord.z, receiverPlaneDepthBias));
-    sum += accum.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.x), coord.z, receiverPlaneDepthBias));
-    sum += accum.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.x), coord.z, receiverPlaneDepthBias));
+    sum += accum.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.x), coord.z, receiverPlaneDepthBias));
+    sum += accum.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.x), coord.z, receiverPlaneDepthBias));
+    sum += accum.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.x), coord.z, receiverPlaneDepthBias));
 
     accum = uw * vw.y;
-    sum += accum.x *  UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.y), coord.z, receiverPlaneDepthBias));
-    sum += accum.y *  UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.y), coord.z, receiverPlaneDepthBias));
-    sum += accum.z *  UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.y), coord.z, receiverPlaneDepthBias));
+    sum += accum.x *  UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.y), coord.z, receiverPlaneDepthBias));
+    sum += accum.y *  UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.y), coord.z, receiverPlaneDepthBias));
+    sum += accum.z *  UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.y), coord.z, receiverPlaneDepthBias));
 
     accum = uw * vw.z;
-    sum += accum.x * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.z), coord.z, receiverPlaneDepthBias));
-    sum += accum.y * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.z), coord.z, receiverPlaneDepthBias));
-    sum += accum.z * UNITY_SAMPLE_SHADOW(_MainLightShadowmapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.z), coord.z, receiverPlaneDepthBias));
+    sum += accum.x * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.x, v.z), coord.z, receiverPlaneDepthBias));
+    sum += accum.y * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.y, v.z), coord.z, receiverPlaneDepthBias));
+    sum += accum.z * UNITY_SAMPLE_SHADOW(_ShadowMapTexture, UnityCombineShadowcoordComponents(base_uv, float2(u.z, v.z), coord.z, receiverPlaneDepthBias));
     shadow = sum / 144.0f;
 
 #endif
