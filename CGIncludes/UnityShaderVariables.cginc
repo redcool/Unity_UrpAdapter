@@ -181,6 +181,9 @@ CBUFFER_START(UnityPerDraw)
     float4 unity_SpecCube1_BoxMin;
     float4 unity_SpecCube1_ProbePosition;
     half4  unity_SpecCube1_HDR;
+
+    float4 unity_LightmapST;
+    float4 unity_DynamicLightmapST;
 CBUFFER_END
 
 #if defined(USING_STEREO_MATRICES)
@@ -271,10 +274,10 @@ UNITY_DECLARE_TEX2D(unity_DynamicLightmap);
 UNITY_DECLARE_TEX2D_NOSAMPLER(unity_DynamicDirectionality);
 UNITY_DECLARE_TEX2D_NOSAMPLER(unity_DynamicNormal);
 
-CBUFFER_START(UnityLightmaps)
-    float4 unity_LightmapST;
-    float4 unity_DynamicLightmapST;
-CBUFFER_END
+// CBUFFER_START(UnityLightmaps)
+//     float4 unity_LightmapST;
+//     float4 unity_DynamicLightmapST;
+// CBUFFER_END
 
 
 // ----------------------------------------------------------------------------
