@@ -13,6 +13,7 @@ half4 _MainLightPosition;
 float4x4  _MainLightWorldToShadow[5];
 half4 _MainLightShadowParams; // (x: shadowStrength, y: 1.0 if soft shadows, 0.0 otherwise, z: main light fade scale, w: main light fade bias)
 float4 _ShadowBias; // x: depth bias, y: normal bias
+float3 _LightDirection;
 
 #define _WorldSpaceLightPos0 _MainLightPosition
 #define _LightColor0 _MainLightColor
@@ -38,9 +39,9 @@ half GetShadowFade(float3 positionWS)
     #define TRANSFER_SHADOW(a) a._ShadowCoord = mul( unity_WorldToShadow[0], mul( unity_ObjectToWorld, v.vertex ) );
     inline float unitySampleShadow1 (unityShadowCoord4 shadowCoord)
     {
-        // #if !defined(_MAIN_LIGHT_SHADOWS)
-        //     return 1;
-        // #endif
+        #if !defined(_MAIN_LIGHT_SHADOWS)
+            return 1;
+        #endif
         #if defined(SHADOWS_NATIVE)
             float shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
             shadow = lerp(1,shadow,_LightShadowData.x);
@@ -59,30 +60,38 @@ half GetShadowFade(float3 positionWS)
     #define SHADOW_ATTENUATION(a) unitySampleShadow1(a._ShadowCoord)
 
     #define UNITY_LIGHT_ATTENUATION(destName, input, worldPos) fixed destName = lerp(SHADOW_ATTENUATION(input),1,GetShadowFade(worldPos));
-//-------------- shadow caster
 
+
+//-------------- shadow caster
+#define UnityClipSpaceShadowCasterPos UnityClipSpaceShadowCasterPos1
+float4 UnityClipSpaceShadowCasterPos1(float4 vertex, float3 normal)
+{
+    float4 wPos = mul(unity_ObjectToWorld, vertex);
+
+    float3 wNormal = UnityObjectToWorldNormal(normal);
+    float3 wLight = normalize(UnityWorldSpaceLightDir(wPos.xyz));
+
+    float invNL = 1.0 - saturate(dot(_LightDirection,wNormal));
+    float scale = invNL * _ShadowBias.y;
+
+    wPos.x += _LightDirection * _ShadowBias.xxx;
+    wPos.x += wNormal * scale.xxx;
+
+    return mul(UNITY_MATRIX_VP, wPos);
+}
+float4 UnityClipSpaceShadowCasterPos1(float3 vertex, float3 normal)
+{
+    return UnityClipSpaceShadowCasterPos1(float4(vertex.xyz,1),normal);
+}
 #define UnityApplyLinearShadowBias UnityApplyLinearShadowBias1
     float4 UnityApplyLinearShadowBias1(float4 clipPos)
     {
-        // For point lights that support depth cube map, the bias is applied in the fragment shader sampling the shadow map.
-        // This is because the legacy behaviour for point light shadow map cannot be implemented by offseting the vertex position
-        // in the vertex shader generating the shadow map.
-    #if !(defined(SHADOWS_CUBE) && defined(SHADOWS_CUBE_IN_DEPTH_TEX))
         #if defined(UNITY_REVERSED_Z)
-            // We use max/min instead of clamp to ensure proper handling of the rare case
-            // where both numerator and denominator are zero and the fraction becomes NaN.
-            clipPos.z += max(-1, min(unity_LightShadowBias.x / clipPos.w, 0));
+            float clamped = min(clipPos.z, clipPos.w*UNITY_NEAR_CLIP_VALUE);
         #else
-            clipPos.z += saturate(unity_LightShadowBias.x/clipPos.w);
+            float clamped = max(clipPos.z, clipPos.w*UNITY_NEAR_CLIP_VALUE);
         #endif
-    #endif
-
-    #if defined(UNITY_REVERSED_Z)
-        float clamped = min(clipPos.z, clipPos.w*UNITY_NEAR_CLIP_VALUE);
-    #else
-        float clamped = max(clipPos.z, clipPos.w*UNITY_NEAR_CLIP_VALUE);
-    #endif
-        clipPos.z = lerp(clipPos.z, clamped, unity_LightShadowBias.y);
+            clipPos.z = lerp(clipPos.z, clamped, unity_LightShadowBias.y);
         return clipPos;
     }
 #endif //DRP_VARIABLES_HLSL
