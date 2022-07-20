@@ -21,14 +21,30 @@ float4 _ShadowBias; // x: depth bias, y: normal bias
 #define _LightShadowData _MainLightShadowParams
 #define unity_LightShadowBias _ShadowBias
 
+#define BEYOND_SHADOW_FAR(shadowCoord) shadowCoord.z <= 0.0 || shadowCoord.z >= 1.0
+
+half GetShadowFade(float3 positionWS)
+{
+    float3 camToPixel = positionWS - _WorldSpaceCameraPos;
+    float distanceCamToPixel2 = dot(camToPixel, camToPixel);
+
+    half fade = saturate(distanceCamToPixel2 * _MainLightShadowParams.z + _MainLightShadowParams.w);
+    return fade * fade;
+}
+
+//--------------------------------------------- shadow receiver
 #define unitySampleShadow unitySampleShadow1
     UNITY_DECLARE_SHADOWMAP(_MainLightShadowmapTexture);
     #define TRANSFER_SHADOW(a) a._ShadowCoord = mul( unity_WorldToShadow[0], mul( unity_ObjectToWorld, v.vertex ) );
-    inline half unitySampleShadow1 (unityShadowCoord4 shadowCoord)
+    inline float unitySampleShadow1 (unityShadowCoord4 shadowCoord)
     {
+        // #if !defined(_MAIN_LIGHT_SHADOWS)
+        //     return 1;
+        // #endif
         #if defined(SHADOWS_NATIVE)
-            half shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
-            return lerp(1,shadow,_LightShadowData.x);
+            float shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
+            shadow = lerp(1,shadow,_LightShadowData.x);
+            return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : shadow;
         #else
             unityShadowCoord dist = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, shadowCoord.xy);
             // tegra is confused if we use _LightShadowData.x directly
@@ -40,8 +56,9 @@ float4 _ShadowBias; // x: depth bias, y: normal bias
     }
 
     #define SHADOW_COORDS(idx1) unityShadowCoord4 _ShadowCoord : TEXCOORD##idx1;
-    #define SHADOW_ATTENUATION(a) unitySampleShadow(a._ShadowCoord)
+    #define SHADOW_ATTENUATION(a) unitySampleShadow1(a._ShadowCoord)
 
+    #define UNITY_LIGHT_ATTENUATION(destName, input, worldPos) fixed destName = lerp(SHADOW_ATTENUATION(input),1,GetShadowFade(worldPos));
 //-------------- shadow caster
 
 #define UnityApplyLinearShadowBias UnityApplyLinearShadowBias1
