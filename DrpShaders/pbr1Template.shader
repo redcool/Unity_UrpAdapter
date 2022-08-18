@@ -15,9 +15,9 @@ Shader "Unlit/pbr1Template"
     }
 
     CGINCLUDE
-            #include "UnityCG.cginc"
-            #include "UnityStandardUtils.cginc"
-            #include "AutoLight.cginc"
+        #include "UnityCG.cginc"
+        #include "UnityStandardUtils.cginc"
+        #include "AutoLight.cginc"
 
         half4 _LightColor0;
         #define _MainLightColor _LightColor0
@@ -122,13 +122,14 @@ Shader "Unlit/pbr1Template"
             half4 frag (v2f i) : SV_Target
             {
                 half4 pbrMask = tex2D(_PbrMask,i.uv);
+                pbrMask = 1;
                 float metallic = pbrMask.x * _Metallic;
                 float smoothness = pbrMask.y * _Smoothness;
                 float occlusion = lerp(1,pbrMask.z , _Occlusion);
 
                 float rough = 1-smoothness;
-                float a = max(rough*rough,2e-3);
-                float a2 = a*a;
+                float a = max(rough*rough,1e-4);
+                float a2 = max(a*a,1e-6);
 
                 float3 tn = UnpackScaleNormal(tex2D(_NormalMap,i.uv),_NormalScale);
                 float3 n = normalize(float3(
@@ -151,14 +152,16 @@ Shader "Unlit/pbr1Template"
 
                 // sample the texture
                 half4 mainTex = tex2D(_MainTex, i.uv) * _Color; // to linear
-                #if defined(UNITY_COLORSPACE_GAMMA)
-                    mainTex = pow(mainTex,2.2);
-                #endif 
+
                 half3 albedo = mainTex.xyz;
                 half alpha = mainTex.w;
 
-                half3 diffColor = albedo  * (1-metallic);
-                half3 specColor = lerp(0.04,albedo,metallic);
+                half dielectricSpec=0.04;
+                #if defined(UNITY_COLORSPACE_GAMMA)
+                    dielectricSpec = 0.22;
+                #endif
+                half3 diffColor = albedo  * (1-dielectricSpec-metallic);
+                half3 specColor = lerp(dielectricSpec,albedo,metallic);
 
                 // gi
                 half3 sh = ShadeSH9(float4(n,1));
@@ -173,10 +176,9 @@ Shader "Unlit/pbr1Template"
                 half fresnelTerm = pow(1-nv,4);
                 half grazingTerm = saturate(smoothness+metallic);
                 half3 giSpec = envColor.xyz * surfaceReduction * lerp(specColor,grazingTerm,fresnelTerm);
-
                 half4 col = 0;
                 col.xyz += (giDiff + giSpec) * occlusion;
-
+// return diffColor.xyzx;
                 //
                 // lighting
                 // half shadowAtten = SHADOW_ATTENUATION(i);
@@ -187,16 +189,17 @@ Shader "Unlit/pbr1Template"
 // return shadowAtten;
                 float radiance = nl * shadowAtten;
                 float d = nh*nh*(a2-1)+1;
-                float3 specTerm = a2/(d*d*lh*lh * (4*a+2));
+                float specTerm = a2/(d*d* max(.0001,lh*lh) * (4*a+2));
+                #if defined(UNITY_COLORSPACE_GAMMA)
+                    specTerm = sqrt(max(1e-4,specTerm));
+                #endif
+
                 col.xyz += (diffColor + specColor * specTerm) * _MainLightColor * radiance;
                 col.w = alpha;
+
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
 
-                // to gamma
-                #if defined(UNITY_COLORSPACE_GAMMA)
-                col = pow(col,0.45);
-                #endif
                 return col;
             }
             ENDCG
