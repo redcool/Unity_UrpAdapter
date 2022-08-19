@@ -156,12 +156,14 @@ Shader "Unlit/pbr1Template"
                 half3 albedo = mainTex.xyz;
                 half alpha = mainTex.w;
 
-                half dielectricSpec=0.04;
-                #if defined(UNITY_COLORSPACE_GAMMA)
-                    dielectricSpec = 0.22;
-                #endif
-                half3 diffColor = albedo  * (1-dielectricSpec-metallic);
-                half3 specColor = lerp(dielectricSpec,albedo,metallic);
+                // gamma linear version
+                half oneMinusReflectivity = unity_ColorSpaceDielectricSpec.a - unity_ColorSpaceDielectricSpec.a * metallic;
+                half3 diffColor = oneMinusReflectivity * albedo;
+                half3 specColor = lerp(unity_ColorSpaceDielectricSpec.xyz,albedo,metallic);
+
+                // linear version only
+                // half3 diffColor = albedo  * (1-metallic);
+                // half3 specColor = lerp(0.04,albedo,metallic);
 
                 // gi
                 half3 sh = ShadeSH9(float4(n,1));
