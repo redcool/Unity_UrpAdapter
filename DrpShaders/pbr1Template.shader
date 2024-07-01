@@ -1,4 +1,4 @@
-Shader "Unlit/pbr1Template"
+Shader "Hidden/pbr1Template"
 {
     Properties
     {
@@ -55,7 +55,7 @@ Shader "Unlit/pbr1Template"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "LightMode"="ForwardBase"}
+        Tags { "RenderType"="Opaque" }
         LOD 100
 
         Pass
@@ -63,7 +63,7 @@ Shader "Unlit/pbr1Template"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma  multi_compile_fwdbase
+            // #pragma  multi_compile_fwdbase
             // #pragma multi_compile _ SHADOWS_SCREEN
             // make fog work
             #pragma multi_compile_fog
@@ -93,12 +93,12 @@ Shader "Unlit/pbr1Template"
             sampler2D _MainTex;
             sampler2D _PbrMask;
             sampler2D _NormalMap;
-
+CBUFFER_START(UnityPerMaterial)
             float4 _MainTex_ST;
             half _Metallic,_Smoothness,_Occlusion;
             half _NormalScale;
             half4 _Color;
-
+CBUFFER_END
             v2f vert (appdata v)
             {
                 v2f o = (v2f)0;
@@ -122,7 +122,7 @@ Shader "Unlit/pbr1Template"
             half4 frag (v2f i) : SV_Target
             {
                 half4 pbrMask = tex2D(_PbrMask,i.uv);
-                pbrMask = 1;
+
                 float metallic = pbrMask.x * _Metallic;
                 float smoothness = pbrMask.y * _Smoothness;
                 float occlusion = lerp(1,pbrMask.z , _Occlusion);
