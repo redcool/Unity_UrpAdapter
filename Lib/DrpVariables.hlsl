@@ -7,7 +7,9 @@
 #include "UnityShadowLibrary.cginc"
 
 half4 _MainLightPosition;
-// half4 _MainLightColor;
+#if defined(MAIN_LIGHT_COLOR)
+half4 _MainLightColor;
+#endif
 
 // sampler2D _MainLightShadowmapTexture;
 float4x4  _MainLightWorldToShadow[5];
@@ -23,6 +25,10 @@ float3 _LightDirection;
 #define unity_LightShadowBias _ShadowBias
 
 #define BEYOND_SHADOW_FAR(shadowCoord) shadowCoord.z <= 0.0 || shadowCoord.z >= 1.0
+#define fixed half
+#define fixed2 half2
+#define fixed3 half3
+#define fixed4 half4
 
 half GetShadowFade(float3 positionWS)
 {
