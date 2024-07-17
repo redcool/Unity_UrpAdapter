@@ -24,7 +24,7 @@ float3 _LightDirection;
 #define _LightShadowData _MainLightShadowParams
 #define unity_LightShadowBias _ShadowBias
 
-#define BEYOND_SHADOW_FAR(shadowCoord) shadowCoord.z <= 0.0 || shadowCoord.z >= 1.0
+#define BEYOND_SHADOW_FAR(shadowCoord) any(shadowCoord.xyz <= 0.0) || any(shadowCoord.xyz >= 1.0)
 #define fixed half
 #define fixed2 half2
 #define fixed3 half3
