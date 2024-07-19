@@ -1,7 +1,12 @@
 
-import Lib/DrpVaribles.hlsl
-    replace UnityCG.cginc to DrpVariables.hlsl
+1
+enable srp batch:
+    replace 
+    Unity_UrpAdapter\CGIncludes 
+    to
+    Unity\Editor\Data\CGIncludes
 
-srp batch
-    replace UnityShaderVariables Unity\Editor\Data\CGIncludes\UnityShaderVariables.shader
 
+2 update cg shader:
+    1 import Lib/DrpVaribles.hlsl
+    2 replace UnityCG.cginc to DrpVariables.hlsl
