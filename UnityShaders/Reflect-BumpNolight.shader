@@ -17,7 +17,7 @@ Category {
         // Always drawn reflective pass
         Pass {
             Name "BASE"
-            Tags {"LightMode" = "Always"}
+            // Tags {"LightMode" = "Always"}
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag
